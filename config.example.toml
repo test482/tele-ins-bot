@@ -1,0 +1,7 @@
+bot_token = "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+instagram_username = "your_instagram_username"
+download_mode = false  # download media locally before sending to Telegram
+
+[whitelist]
+users = ["1234567890", "9123456789"]
+groups = ["-1234567890123"]

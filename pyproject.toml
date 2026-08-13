@@ -1,0 +1,14 @@
+[project]
+name = "tg-social-media-download-bot"
+version = "0.1.0"
+description = "A telegram bot to fetch media from Instagram url."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiohttp>=3.12.14",
+    "browser-cookie3>=0.20.1", # uv run instaloader --load-cookies firefox
+    "instaloader>=4.14.2",
+    "loguru>=0.7.3",
+    "platformdirs>=4.9.4",
+    "pytelegrambotapi>=4.27.0",
+]
