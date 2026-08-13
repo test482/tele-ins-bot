@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import re
+import tempfile
+from pathlib import Path
 
 import instaloader
 import telebot
@@ -162,27 +164,26 @@ async def _download_post_files(L, post, username: str, tmpdir) -> None:
 
 async def _handle_download_mode(bot, message, L, post, username: str):
     """Download post files locally then upload to Telegram."""
-    tmpdir = user_runtime_path(appname='tgbot') / post.shortcode
-    tmpdir.mkdir(parents=True, exist_ok=True)
-    logger.info('Downloading {} to {}', post.shortcode, tmpdir)
-    try:
-        await _download_post_files(L, post, username, tmpdir)
-        post_contents = utils.build_post_contents_from_dir(tmpdir, post.caption)
-        await utils.send_media_chunks(bot, message.chat.id, message.id, post_contents)
-    except LoginRequiredException:
-        logger.error('Instagram session expired or login required')
-        await bot.reply_to(
-            message=message,
-            text='Instagram session expired. Please reload the session.',
-        )
-    except Exception as e:  # noqa: BLE001 - report, never drop the request
-        logger.exception('Failed to download post: {}', e)
-        await bot.reply_to(message, f'Failed to download post: {e}')
-    finally:
-        for f in tmpdir.iterdir():
-            f.unlink(missing_ok=True)
-        tmpdir.rmdir()
-        logger.info('Cleaned up {}', tmpdir)
+    runtime_base = user_runtime_path(appname='tgbot')
+    runtime_base.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=runtime_base) as tmpdir_str:
+        tmpdir = Path(tmpdir_str)
+        logger.info('Downloading {} to {}', post.shortcode, tmpdir)
+        try:
+            await _download_post_files(L, post, username, tmpdir)
+            post_contents = utils.build_post_contents_from_dir(tmpdir, post.caption)
+            await utils.send_media_chunks(bot, message.chat.id, message.id, post_contents)
+        except LoginRequiredException:
+            logger.error('Instagram session expired or login required')
+            await bot.reply_to(
+                message=message,
+                text='Instagram session expired. Please reload the session.',
+            )
+        except Exception as e:  # noqa: BLE001 - report, never drop the request
+            logger.exception('Failed to download post: {}', e)
+            await bot.reply_to(message, f'Failed to download post: {e}')
+        finally:
+            logger.info('Cleaned up {}', tmpdir)
 
 
 async def _handle_url_mode(bot, message, post):
